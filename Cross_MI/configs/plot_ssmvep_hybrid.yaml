@@ -1,0 +1,89 @@
+# data_loader
+dataset_name: "ssmvep_hybrid"
+sence: "S2"  # !!!cross_double2   cross_task1
+n_train: 1  # !!!训练次数
+fold: 10  # !!!仅在非跨情况下有用
+test_ratio: 0.2  # !!!
+train_ratio: [0]  # !!!有0的情况下就是无监督,0.2,0.4,0.6,0.8
+dataclass: 1
+Subject: [[1,2,3,4,5,6,7,8,9,10,
+           11,12,13,14,15,16,17,18,19,20,
+           21,22,23,24,25,26,27,28,29,30,
+           31,32,33,34,35,36,37],
+           1]
+n_class: [0,1]  # !!!若想要跨任务，设置为1，后面写【1，源，目】；不跨则为0【0，想要的类别】
+class_class: []
+
+stim_name: ['ssvideo', 'video', 'ssmvep', 'cue']
+starttime: 0
+endtime: 6
+srate: 250
+ch_choose: [] # [16,17,18,19,20,21,22,   # FC5-FC6
+              #            25,26,27,28,29,30,31,   # C5-C6
+              #            34,35,36,37,38,39,40,   # CP5-CP6
+              #            ]
+ch_names: ['Fp1', 'Fpz', 'Fp2', 'AF3', 'AF4', 'F7', 'F5', 'F3', 'F1', 'Fz', 'F2', 'F4', 'F6', 'F8',
+            'FT7', 'FC5', 'FC3', 'FC1', 'FCz', 'FC2', 'FC4', 'FC6', 'FT8', 'T7', 'C5', 'C3', 'C1',
+            'Cz', 'C2', 'C4', 'C6', 'T8', 'TP7', 'CP5', 'CP3', 'CP1', 'CPz', 'CP2', 'CP4', 'CP6',
+            'TP8', 'P7', 'P5', 'P3', 'P1', 'Pz', 'P2', 'P4', 'P6', 'P8', 'PO7', 'PO5', 'PO3', 'POz',
+            'PO4', 'PO6', 'PO8', 'O1', 'Oz', 'O2']
+data_4_filepath: 'E:\Datasets\4_跨场景因素研究v2\跨场景因素研究v2处理后数据'
+save_root: 'E:\wenjian\6_写论文\新_2025\画图结果'
+# 并行计算
+n_jobs: -1
+
+# 任务窗 & 基线
+RestDuration: 2.0  # s
+TaskDuration: 4.0  # s
+
+# PSD
+use_task_only: True
+baseline_mode: 'db'  # 'none' | 'db' | 'pct'
+class_name: ['Left', 'Right']
+topo_plot_mode: 'both'
+
+# 通道选择 & 图例
+chan_select: [28, 30]  # 示例；可改为 None 表示全部
+legend_labels: {28: 'C3', 30: 'C4'}
+legend_outside: True
+
+# PSD 计算参数
+n_per_seg_user: None
+psd_plot_fmin: 4.0
+welch_win_sec: 2.0
+welch_noverlap: 0.5
+welch_detrend: 'linear'
+welch_window: 'hann'
+use_multitaper: False
+mt_bandwidth: 4.0
+
+# 频带定义
+bands:
+  - ['θ(4–8)', 4, 8]
+  - ['α(8–13)', 8, 13]
+  - ['β(13–30)', 13, 30]
+band_colors: ['#fde0dd', '#e0f3db', '#deebf7']
+band_alpha: 0.5
+ssvep_lines: []
+
+# 统计参数
+alpha: 0.05
+fdr_method: 'by'
+use_cluster_perm: True
+n_perm_cluster: 2000
+
+# 质量控制参数
+qc_detect_outlier: True
+qc_method: 'mad'
+qc_thr: 3.5
+qc_action: 'drop'
+
+# 预处理参数
+use_car: True
+spatial_centering: True
+regress_pc_k: 1
+
+
+
+
+

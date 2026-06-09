@@ -1,0 +1,26 @@
+# general
+srate: 250
+# data_loader
+dataset_name: "online_hybrid"
+sence: 'cross_double1' # !!!"cross_double1"就是在线的无监督准确率
+n_train: 1  # !!!训练次数
+fold: 10  # !!!仅在非跨情况下有用，计算离线情况下的离线准确率
+test_ratio: 0.2  # !!!
+train_ratio: [0]  # !!!有0的情况下就是无监督,用不到test_ratio  0.2,0.4,0.6,0.8
+
+dataclass: 1
+Subject: [[1,2,3,4,5,6,7,8,9,10,11],1]
+n_class: [0,4]  # !!!若想要跨任务，设置为1，后面写【1，源，目】；不跨则为0【0，想要的类别】
+class_class: []
+# preprocessing
+starttime: 2
+endtime: 6
+fre_win: [8,30]
+ch_choose: [16,17,18,19,20,21,22,   # FC5-FC6
+            25,26,27,28,29,30,31,   # C5-C6
+            34,35,36,37,38,39,40,   # CP5-CP6
+            ]
+
+ALignment: []   #  'RA'
+Auxiliary: []    # 'RSF'
+Algrithm: ['CSPSVM','FBCSP','FGMDRM','EEGNET']  # !!!'FBCSP','EEGNET'
