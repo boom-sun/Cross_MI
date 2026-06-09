@@ -1,0 +1,25 @@
+# """ Experimental settings """
+backbone: 'EEGNet'
+save_path: '/result/'
+
+train:
+  trial_per_batch_task: 2880     # 每个 task 的 support 样本数（你现在的设定）
+  freeze_epoch: 1000          # 先基本等于不用 freeze，后面再玩复杂策略
+
+  meta_lr: 0.0001                # 元更新（outer-loop）的学习率
+  inner_optimizer: adam           # 内层优化器
+  task_lr: 0.0005                 # inner-loop 学习率
+
+  meta_batch_size: 2              # 每次 meta-update 累积多少个 task
+  mini_task_size: 2880            # support 再切分的大小
+  inner_batch_size: 1000           # support loader 里的 batch 大小
+  test_batch_size: 80             # 验证/测试时用的 batch 大小（刚好等于每个被试的 trial 数）
+
+  num_query_subject: 6        # ✅ 新加的参数：每次只用 6 个 subject 当 query
+  val_interval: 10             # ✅ 配合我们改过的主循环，每 5 轮验证一次
+
+  w_decay: 0.0001
+  drop: 0.25
+
+  batch_iter: 40                 # meta 迭代次数
+  batch_size: 72
