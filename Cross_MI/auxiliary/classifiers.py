@@ -57,19 +57,27 @@ class Classier():
         X_cov = covariances(X,estimator='lwf')
         n_classes = len(np.unique(y))
         if 'CSPSVM' == self.Algrithm:
-            self.model = make_pipeline(CSP(nfilter=8), SVC())
-            self.model.fit(X_cov,y)
+            self.model = make_pipeline(CSP(nfilter=8), SVC(probability=True))
+            self.model.fit(X_cov, y)
         elif 'FBCSP' == self.Algrithm:
             wp = [(4, 8), (8, 12), (12, 16), (16, 20), (20, 24), (24, 28), (28, 32), (4, 12), (12, 20), (20, 28)]
             ws = [(2, 10), (6, 14), (10, 18), (14, 22), (18, 26), (22, 30), (26, 34), (2, 14), (10, 22), (18, 30)]
             filterbank = generate_filterbank(wp, ws, srate=self.srate, order=4, rp=0.5)
             self.model = make_pipeline(*[
                 FBCSP(n_components=8, n_mutualinfo_components=10, filterbank=filterbank),
-                SVC()])
+                SVC(probability=True)])
+            self.model.fit(X, y)
+        elif 'FBCSPLDA' == self.Algrithm:
+            wp = [(4, 8), (8, 12), (12, 16), (16, 20), (20, 24), (24, 28), (28, 32), (4, 12), (12, 20), (20, 28)]
+            ws = [(2, 10), (6, 14), (10, 18), (14, 22), (18, 26), (22, 30), (26, 34), (2, 14), (10, 22), (18, 30)]
+            filterbank = generate_filterbank(wp, ws, srate=self.srate, order=4, rp=0.5)
+            self.model = make_pipeline(*[
+                FBCSP(n_components=8, n_mutualinfo_components=10, filterbank=filterbank),
+                LDA(solver='eigen', shrinkage='auto')])
             self.model.fit(X, y)
         elif 'CSPLDA' == self.Algrithm:
             self.model = make_pipeline(CSP(nfilter=8), LDA(solver='eigen', shrinkage='auto'))
-            self.model.fit(X_cov)
+            self.model.fit(X_cov, y)
         elif 'TSLDA' == self.Algrithm:
             self.model = TSClassifier()
             self.model.fit(X_cov,y)
@@ -281,7 +289,7 @@ class Classier():
                 ('DCPM' == self.Algrithm) or ('MDRM' == self.Algrithm) or ('FGMDRM' == self.Algrithm):
             y_pred = self.model.predict(X_cov)
         elif ('FBCSP' == self.Algrithm) or ('PTLDA'== self.Algrithm) or ('EEGNET' == self.Algrithm) \
-                or ('SHALLOWNET' in self.Algrithm) :
+                or ('SHALLOWNET' in self.Algrithm) or ('FBCSPLDA' == self.Algrithm)  :
             X_ =torch.tensor(X.copy())
             y_pred = self.model.predict(X_)
         elif ('SHALLOWFBCSP' == self.Algrithm) or ('ATCNET' == self.Algrithm) or ('EEGCONFORMER' == self.Algrithm)\
@@ -296,3 +304,28 @@ class Classier():
             X_sel = X[:, self._mi21_idx, :]
             return self.model.predict(X_sel)
         return y_pred
+
+    def predict_proba(self, X):
+        """Return class probability estimates; None when the model does not support it."""
+        X_cov = covariances(X, estimator='lwf')
+        try:
+            if self.Algrithm in ('CSPSVM', 'CSPLDA', 'TSLDA', 'MDRM', 'FGMDRM', 'DCPM'):
+                return self.model.predict_proba(X_cov)
+            elif self.Algrithm in ('FBCSP','FBCSPLDA'):
+                return self.model.predict_proba(X)
+            elif self.Algrithm == 'PTLDA':
+                X_ = torch.tensor(X.copy(), dtype=torch.float32)
+                return self.model.predict_proba(X_)
+            elif self.Algrithm in ('EEGNET', 'SHALLOWNET'):
+                X_ = torch.tensor(X.copy(), dtype=torch.float32)
+                return self.model.predict_proba(X_)
+            elif self.Algrithm in ('ATCNET', 'EEGCONFORMER', 'SHALLOWFBCSP', 'EEGINCEPTIONMI'):
+                X_ = X.astype(np.float32)
+                return self.model.predict_proba(X_)
+            elif self.Algrithm == 'EEGGCN_21':
+                X_sel = X[:, self._mi21_idx, :]
+                if hasattr(self.model, 'predict_proba'):
+                    return self.model.predict_proba(X_sel)
+        except Exception:
+            pass
+        return None

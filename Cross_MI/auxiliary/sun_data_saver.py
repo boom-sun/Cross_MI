@@ -76,7 +76,7 @@ class Saver():
         for i in range(len(self.Algrithm)):
             self.Algrithm[i] = self.Algrithm[i].upper()
 
-    def saver(self, subject, acc, res, auc):
+    def saver(self, subject, acc, res, metrics):
         if self.dataset_name in ['online_hybrid']:
             stim_name= ('ssvideo', 'video', 'ssmveparrow', 'arrow')
         else:
@@ -101,82 +101,125 @@ class Saver():
                 savename = save_path+'\\result_' + self.dataset_name + \
                                '\\{}result_sub{}'.format(self.dataclass,subject) + \
                                '_' + self.sence + '_class4.mat'
-        sio.savemat(savename, {'acc': acc, 'res': res, 'auc': auc})
+        # Build per-metric dicts from the nested metrics structure for MATLAB compatibility
+        auc     = {alg: metrics[alg]['auc']          for alg in metrics}
+        bacc    = {alg: metrics[alg]['balanced_acc']  for alg in metrics}
+        f1      = {alg: metrics[alg]['macro_f1']      for alg in metrics}
+        kappa   = {alg: metrics[alg]['kappa']         for alg in metrics}
+        mcc     = {alg: metrics[alg]['mcc']           for alg in metrics}
+        sens    = {alg: metrics[alg]['sensitivity']   for alg in metrics}
+        spec    = {alg: metrics[alg]['specificity']   for alg in metrics}
+        conf    = {alg: metrics[alg]['conf_matrix']   for alg in metrics}
+        sio.savemat(savename, {
+            'acc': acc, 'res': res,
+            'auc': auc, 'bacc': bacc, 'f1': f1,
+            'kappa': kappa, 'mcc': mcc,
+            'sens': sens, 'spec': spec, 'conf': conf,
+        })
         if subject == self.subject_all[-1]:
             self.saver_all()
 
-    def saver_all(self):
-        if self.dataset_name in ['online_hybrid']:
-            stim_name=stim_name_online
-        else:
-            stim_name = ('ssvideo', 'video', 'ssmvep', 'cue')
-        for subject in self.subject_all:
-            if self.class_class == []:
-                if len(self.n_class) < 3:
-                    savename = save_path + '\\result_' +self.dataset_name + \
-                               '\\{}result_sub{}_{}'.format(self.dataclass, subject, self.n_class[0]) + \
-                               '_' + self.sence + '_' + stim_name[self.n_class[1]-1] + '.mat'
-                else:
-                    savename = save_path+ '\\result_' +self.dataset_name + \
-                               '\\{}result_sub{}_{}'.format(self.dataclass, subject, self.n_class[0]) + \
-                               '_' + self.sence + '_' + stim_name[self.n_class[1]-1] + '_' + stim_name[
-                                   self.n_class[2]-1] + '.mat'
-            else:
-                if len(self.class_class) == 2:
-                    savename = save_path+'\\result_' +self.dataset_name + \
-                               '\\{}result_sub{}'.format(self.dataclass, subject) + \
-                               '_' + self.sence + '_class{}_{}'.format(self.class_class[0],
-                                                                       self.class_class[1]) + '.mat'
-                else:
-                    savename = save_path+ '\\result_' +self.dataset_name + \
-                               '\\{}result_sub{}'.format(self.dataclass, subject) + \
-                               '_' + self.sence + '_class4.mat'
-            data_struct = load_mat_as_namespace(savename)
-            acc = data_struct.acc
-            res = data_struct.res
-            auc = data_struct.auc
-            if subject == self.subject_all[0]:
-                self.allsub_acc = {key: [] for key in self.Algrithm}
-                self.allsub_res = {key: [] for key in self.Algrithm}
-                self.allsub_auc = {key: [] for key in self.Algrithm}
-            if self.sence in ['S1', 'S2']:
-                for (key) in acc._fieldnames:  # 准确率：train*fold，平均后为train次训练fold折后平均
-                    self.allsub_acc[format(key)].append(np.mean([np.mean(acc.__dict__[key], axis=0)], axis=0))
-                for (key) in res._fieldnames:
-                    self.allsub_res[format(key)].append(res.__dict__[key])
-                for (key) in auc._fieldnames:  # auc：train*fold，平均后为train次训练fold折后平均
-                    self.allsub_auc[format(key)].append(np.mean([np.mean(auc.__dict__[key], axis=0)], axis=0))
-            if self.sence in ['cross1', 'cross2', 'cross_subject_S1','cross_task1', 'cross_task2',
-                              'cross_subject_S2', 'cross_double1', 'cross_double2','S1_online', 'S2_online',
-                              'global_cross_double1', 'global_cross_double2']:
-                for (key) in acc._fieldnames:
-                    self.allsub_acc[format(key)].append(cross_value_mean(acc.__dict__[key]))
-                for (key) in res._fieldnames:
-                    self.allsub_res[format(key)].append((res.__dict__[key]))
-                for (key) in auc._fieldnames:
-                    self.allsub_auc[format(key)].append(cross_value_mean(auc.__dict__[key]))
-        for (key) in acc._fieldnames:
-            print('所有被试平均准确率为：', '%.2f' % (np.mean(self.allsub_acc[format(key)])*100), '%')
-
+    # ------------------------------------------------------------------ helpers
+    def _subject_savename(self, subject, stim_name):
         if self.class_class == []:
             if len(self.n_class) < 3:
-                savename_all = save_path+'\\result_'+self.dataset_name + \
-                '\\{}result_{}'.format(self.dataclass, self.n_class[0]) + \
-                '_' + self.sence + '_' + stim_name[self.n_class[1]-1]+'.mat'
+                return (save_path + '\\result_' + self.dataset_name +
+                        '\\{}result_sub{}_{}'.format(self.dataclass, subject, self.n_class[0]) +
+                        '_' + self.sence + '_' + stim_name[self.n_class[1]-1] + '.mat')
             else:
-                savename_all = save_path+'\\result_'+self.dataset_name + \
-                '\\{}result_{}'.format(self.dataclass, self.n_class[0]) + \
-                '_' + self.sence + '_' + stim_name[self.n_class[1]-1]+'_'+stim_name[self.n_class[2]-1]+'.mat'
+                return (save_path + '\\result_' + self.dataset_name +
+                        '\\{}result_sub{}_{}'.format(self.dataclass, subject, self.n_class[0]) +
+                        '_' + self.sence + '_' + stim_name[self.n_class[1]-1] +
+                        '_' + stim_name[self.n_class[2]-1] + '.mat')
         else:
             if len(self.class_class) == 2:
-                savename_all = save_path+'\\result_'+self.dataset_name + \
-                '\\{}result'.format(self.dataclass) + \
-                '_' + self.sence + '_class{}_{}'.format(self.class_class[0],self.class_class[1]) +'.mat'
+                return (save_path + '\\result_' + self.dataset_name +
+                        '\\{}result_sub{}'.format(self.dataclass, subject) +
+                        '_' + self.sence +
+                        '_class{}_{}'.format(self.class_class[0], self.class_class[1]) + '.mat')
             else:
-                savename_all = save_path+'\\result_'+self.dataset_name + \
-                '\\{}result'.format(self.dataclass) + \
-                '_' + self.sence + '_class4.mat'
-        sio.savemat(savename_all, {'acc': self.allsub_acc})
+                return (save_path + '\\result_' + self.dataset_name +
+                        '\\{}result_sub{}'.format(self.dataclass, subject) +
+                        '_' + self.sence + '_class4.mat')
+
+    def _all_savename(self, stim_name):
+        if self.class_class == []:
+            if len(self.n_class) < 3:
+                return (save_path + '\\result_' + self.dataset_name +
+                        '\\{}result_{}'.format(self.dataclass, self.n_class[0]) +
+                        '_' + self.sence + '_' + stim_name[self.n_class[1]-1] + '.mat')
+            else:
+                return (save_path + '\\result_' + self.dataset_name +
+                        '\\{}result_{}'.format(self.dataclass, self.n_class[0]) +
+                        '_' + self.sence + '_' + stim_name[self.n_class[1]-1] +
+                        '_' + stim_name[self.n_class[2]-1] + '.mat')
+        else:
+            if len(self.class_class) == 2:
+                return (save_path + '\\result_' + self.dataset_name +
+                        '\\{}result'.format(self.dataclass) +
+                        '_' + self.sence +
+                        '_class{}_{}'.format(self.class_class[0], self.class_class[1]) + '.mat')
+            else:
+                return (save_path + '\\result_' + self.dataset_name +
+                        '\\{}result'.format(self.dataclass) +
+                        '_' + self.sence + '_class4.mat')
+
+    # Scalar metrics that are aggregated the same way as accuracy
+    _SCALAR_FIELDS = ('acc', 'auc', 'bacc', 'f1', 'kappa', 'mcc', 'sens', 'spec')
+
+    def saver_all(self):
+        stim_name = stim_name_online if self.dataset_name in ['online_hybrid'] \
+                    else ('ssvideo', 'video', 'ssmvep', 'cue')
+
+        # Initialise per-subject aggregation containers
+        allsub = {m: {key: [] for key in self.Algrithm} for m in self._SCALAR_FIELDS}
+        allsub['res']  = {key: [] for key in self.Algrithm}
+        allsub['conf'] = {key: [] for key in self.Algrithm}
+
+        is_cv = self.sence in ['S1', 'S2']
+
+        for subject in self.subject_all:
+            savename    = self._subject_savename(subject, stim_name)
+            data_struct = load_mat_as_namespace(savename)
+
+            # ---- scalar metrics ----
+            for field_name in self._SCALAR_FIELDS:
+                field = getattr(data_struct, field_name, None)
+                if field is None:
+                    continue
+                for key in field._fieldnames:
+                    val = field.__dict__[key]
+                    if is_cv:
+                        allsub[field_name][format(key)].append(
+                            np.mean([np.mean(val, axis=0)], axis=0))
+                    else:
+                        allsub[field_name][format(key)].append(cross_value_mean(val))
+
+            # ---- predictions ----
+            res_field = getattr(data_struct, 'res', None)
+            if res_field is not None:
+                for key in res_field._fieldnames:
+                    allsub['res'][format(key)].append(res_field.__dict__[key])
+
+            # ---- confusion matrices (store raw; sum in aggregate) ----
+            conf_field = getattr(data_struct, 'conf', None)
+            if conf_field is not None:
+                for key in conf_field._fieldnames:
+                    allsub['conf'][format(key)].append(conf_field.__dict__[key])
+
+        # Print accuracy summary
+        for key in self.Algrithm:
+            vals = allsub['acc'].get(format(key), [])
+            if vals:
+                print('所有被试平均准确率为：',
+                      '%.2f' % (np.mean(vals) * 100), '%',
+                      '  [算法: %s]' % key)
+
+        # ---- save aggregate ----
+        savename_all = self._all_savename(stim_name)
+        save_dict = {m: allsub[m] for m in self._SCALAR_FIELDS}
+        save_dict['conf'] = allsub['conf']
+        sio.savemat(savename_all, save_dict)
 
 class ModelIO:
     """

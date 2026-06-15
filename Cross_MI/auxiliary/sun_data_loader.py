@@ -976,7 +976,7 @@ class Dataloader:
             data,label,sub_label=self.loader_cross_task(subject=subject, dataclass=dataclass, sence=sence,
                                                          n_class=n_class,class_class=[], ch_choose=ch_choose)
         if sence in ['cross_subject1', 'cross_subject2']:
-            data,label,sub_label=self.loader_cross_subject(subject=subject, dataclass=dataclass, sence=sence, n_class=n_class,class_class=[],Subject=Subject)
+            data,label,sub_label=self.loader_cross_subject(subject=subject, dataclass=dataclass, sence=sence, n_class=n_class,class_class=[],Subject=Subject, ch_choose=ch_choose)
         if sence in ['cross_double1', 'cross_double2']:
             data,label,sub_label=self.loader_cross_double(subject=subject, dataclass=dataclass, sence=sence,
                                                           n_class=n_class,class_class=[],Subject=Subject, ch_choose=ch_choose)

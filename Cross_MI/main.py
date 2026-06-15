@@ -6,8 +6,8 @@ import yaml
 from Cross_MI.auxiliary.basemodel import Basemodel
 
 CONFIG_DIR = os.path.join(Path(__file__).resolve().parents[1], "Cross_MI\\configs")
-DEFAULT_CONFIG = "online_hybrid.yaml"
-Subject = list(range(1,11+1))
+DEFAULT_CONFIG = "ssmvep_hybrid.yaml"
+Subject = list(range(1,37+1))
 
 if __name__ == "__main__":
     with open(os.path.join(CONFIG_DIR, DEFAULT_CONFIG), 'rb') as f:
@@ -19,7 +19,7 @@ if __name__ == "__main__":
     saver = Saver(config, Subject)
     for subject in Subject:
         data, label, sub_label = loader.loader_data(subject)
-        acc, res, auc = model.classier(subject, data, label, sub_label)
-        saver.saver(subject, acc, res, auc)
+        acc, res, metrics = model.classier(subject, data, label, sub_label)
+        saver.saver(subject, acc, res, metrics)
         del data, label, sub_label
 

@@ -2,7 +2,7 @@
 srate: 250
 # data_loader
 dataset_name: "ssmvep_hybrid"
-sence: "global_cross_double2"  # !!!cross_double2   cross_task1
+sence: "cross_task2"  # !!!cross_double2   cross_task1    global_cross_double2
 n_train: 1  # !!!训练次数
 fold: 10  # !!!仅在非跨情况下有用
 test_ratio: 0.2  # !!!
@@ -19,7 +19,7 @@ Subject: [[1,2,3,4,5,6,7,8,9,10,
 ##          6,9,16
 #          ],
 #           1]
-n_class: [0,1]  # !!!若想要跨任务，设置为1，后面写【1，源，目】；不跨则为0【0，想要的类别】
+n_class: [1,1,3]  # !!!若想要跨任务，设置为1，后面写【1，源，目】；不跨则为0【0，想要的类别】  ('ssvideo','video','ssmvep','cue')
 class_class: []
 # preprocessing
 starttime: 2
@@ -33,5 +33,5 @@ ch_choose: # []
 
 ALignment: []   #  'RA'
 Auxiliary: []    # 'RSF'
-Algrithm: ['ATCNet']  # !!!'CSPSVM','FBCSP','FGMDRM','EEGNET','ATCNet','EEGConformer'
+Algrithm: ['CSPSVM','FBCSP','FGMDRM','EEGNET',]  # !!!'CSPSVM','FBCSP','FGMDRM','EEGNET','ATCNet','EEGConformer'
               # 'EEGInceptionMI','EEGGCN_21'
